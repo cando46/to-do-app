@@ -3,8 +3,10 @@ package com.example.candogan.todoexercise;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.Manifest;
+import android.content.Context;
 import android.content.pm.PackageManager;
 import android.location.Location;
+import android.location.LocationManager;
 import android.os.Bundle;
 
 import com.google.android.gms.location.LocationServices;
@@ -13,13 +15,20 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapView;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.Circle;
+import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
-public class LocationSelectActivity extends AppCompatActivity implements OnMapReadyCallback {
+public class LocationSelectActivity extends AppCompatActivity implements OnMapReadyCallback, GoogleMap.OnMarkerClickListener, GoogleMap.OnMarkerDragListener {
 
     private MapView mapView;
     private GoogleMap mMap;
+    private Circle mCircle;
+    private Marker mMarker;
+    private CircleOptions locationCircle;
+    private MarkerOptions locationMarker;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -43,9 +52,44 @@ public class LocationSelectActivity extends AppCompatActivity implements OnMapRe
             // for Activity#requestPermissions for more details.
             return;
         }
+
+        LocationManager lm = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+        Location location = lm.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+        double longitude = location.getLongitude();
+        double latitude = location.getLatitude();
         mMap.setMyLocationEnabled(true);
+        LatLng myLocation = new LatLng(latitude, longitude);
+        locationCircle = new CircleOptions().center(myLocation)
+                .radius(150.0);
+        locationMarker = new MarkerOptions()
+                .draggable(true)
+                .position(myLocation);
+
+        mCircle = mMap.addCircle(locationCircle);
+        mMarker = mMap.addMarker(locationMarker);
+        mMap.setOnMarkerDragListener(this);
 //        LatLng sydney = new LatLng(-34, 151);
 //        mMap.addMarker(new MarkerOptions().position(sydney).title("Marker in Sydney"));
 //        mMap.moveCamera(CameraUpdateFactory.newLatLng(sydney));
+    }
+
+    @Override
+    public boolean onMarkerClick(Marker marker) {
+        return false;
+    }
+
+    @Override
+    public void onMarkerDragStart(Marker marker) {
+
+    }
+
+    @Override
+    public void onMarkerDrag(Marker marker) {
+        mCircle.setCenter(marker.getPosition());
+    }
+
+    @Override
+    public void onMarkerDragEnd(Marker marker) {
+
     }
 }
