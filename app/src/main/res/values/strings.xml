@@ -1,4 +1,4 @@
 <resources>
     <string name="app_name">ToDoExercise</string>
-    <string name="google_maps_API_key">AIzaSyD_yPohVnzDer5gwN_ZpJvZG5pj8X-Tq8c</string>
+    <string name="google_maps_api">AIzaSyD_yPohVnzDer5gwN_ZpJvZG5pj8X-Tq8c</string>
 </resources>
