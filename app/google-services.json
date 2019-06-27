@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "435929124128",
+    "firebase_url": "https://to-do-app-166c5.firebaseio.com",
+    "project_id": "to-do-app-166c5",
+    "storage_bucket": "to-do-app-166c5.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:435929124128:android:1079dc9c323704c7",
+        "android_client_info": {
+          "package_name": "com.example.candogan.todoexercise"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "435929124128-a7ptf2sr9vbpnko36gdbckbs1cajboni.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.candogan.todoexercise",
+            "certificate_hash": "8d1bc53ca046d1026489c24668c6d2f002a44ac0"
+          }
+        },
+        {
+          "client_id": "435929124128-h1jb98d9mm1bgh85ls8fqfdrcq076bl2.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDTgfpSQcOqpykL8XfvSFbUn7OLjY6Law8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "435929124128-h1jb98d9mm1bgh85ls8fqfdrcq076bl2.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

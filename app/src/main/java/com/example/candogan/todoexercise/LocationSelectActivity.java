@@ -1,8 +1,8 @@
 package com.example.candogan.todoexercise;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
-import androidx.core.app.NotificationCompat;
 
 import android.Manifest;
 import android.content.Context;
@@ -11,6 +11,7 @@ import android.location.Location;
 import android.location.LocationManager;
 import android.os.Bundle;
 import android.os.Handler;
+import android.view.View;
 import android.widget.SeekBar;
 import android.widget.Toast;
 
@@ -24,6 +25,11 @@ import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
 public class LocationSelectActivity extends AppCompatActivity implements OnMapReadyCallback,
         GoogleMap.OnMapLongClickListener, GoogleMap.OnMarkerClickListener, GoogleMap.OnMarkerDragListener {
@@ -37,10 +43,14 @@ public class LocationSelectActivity extends AppCompatActivity implements OnMapRe
     private SeekBar seekBarSetRadius;
     Handler handler;
     Runnable runnable;
+    FirebaseDatabase firebaseDatabase;
+    DatabaseReference myRef;
 
     private final static int CIRCLE_RADIUS = 150;
     private final static int SEEKBAR_MAX = 750;
     private final static int SECOND = 1000;
+
+    int radius;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -50,14 +60,47 @@ public class LocationSelectActivity extends AppCompatActivity implements OnMapRe
                 .findFragmentById(R.id.mapview_location_select);
         mapFragment.getMapAsync(this);
         seekBarSetRadius = findViewById(R.id.seekBar_location_radius);
-        setCircleRadiusWithSeekBar();
+        initFireBase();
+        getDataFromFireBase();
+    }
+
+    private void getDataFromFireBase() {
+        myRef.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                if (dataSnapshot.child("MarkerInfo").child("LastSelectedLoc").child("latitude").getValue(double.class) != null &&
+                        dataSnapshot.child("MarkerInfo").child("LastSelectedLoc").child("longitude").getValue(double.class) != null &&
+                        dataSnapshot.child("MarkerInfo").child("CircleInfo").getValue(double.class) != null) {
+
+                    double lat = dataSnapshot.child("MarkerInfo").child("LastSelectedLoc").child("latitude").getValue(double.class);
+                    double lng = dataSnapshot.child("MarkerInfo").child("LastSelectedLoc").child("longitude").getValue(double.class);
+                    LatLng latLng = new LatLng(lat, lng);
+                    loadLastCirclePos(latLng);
+                    radius = dataSnapshot.child("MarkerInfo").child("CircleInfo").getValue(int.class);
+                    mCircle.setRadius(radius);
+                    setCircleRadiusWithSeekBar();
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+                Toast.makeText(LocationSelectActivity.this, "The read failed: "
+                        + databaseError.getCode(), Toast.LENGTH_SHORT).show();
+            }
+        });
 
     }
 
+    private void initFireBase() {
+        firebaseDatabase = FirebaseDatabase.getInstance();
+        myRef = firebaseDatabase.getReference();
+    }
 
     private void setCircleRadiusWithSeekBar() {
         seekBarSetRadius.setMax(SEEKBAR_MAX);
-        seekBarSetRadius.setProgress(CIRCLE_RADIUS);
+        seekBarSetRadius.setProgress(radius);
+        setSeekBarVisibility();
+
         seekBarSetRadius.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
@@ -71,7 +114,7 @@ public class LocationSelectActivity extends AppCompatActivity implements OnMapRe
 
             @Override
             public void onStopTrackingTouch(SeekBar seekBar) {
-
+                myRef.child("MarkerInfo").child("CircleInfo").setValue(mCircle.getRadius());
             }
         });
 
@@ -103,15 +146,14 @@ public class LocationSelectActivity extends AppCompatActivity implements OnMapRe
                 e.printStackTrace();
             }
             myLocation = new LatLng(latitude, longitude);
-            locationCircle = new CircleOptions().center(myLocation)
+           /* locationCircle = new CircleOptions().center(myLocation)
                     .radius(CIRCLE_RADIUS);
             locationMarker = new MarkerOptions()
                     .draggable(true)
                     .position(myLocation);
 
             mCircle = mMap.addCircle(locationCircle);
-            mMarker = mMap.addMarker(locationMarker);
-
+            mMarker = mMap.addMarker(locationMarker);*/
             mMap.setOnMarkerDragListener(this);
             mMap.setOnMapLongClickListener(this);
             mMap.setMyLocationEnabled(true);
@@ -129,28 +171,32 @@ public class LocationSelectActivity extends AppCompatActivity implements OnMapRe
 
     @Override
     public void onMarkerDragStart(Marker marker) {
-
+        if (handler != null)
+            handler.removeCallbacks(runnable);
     }
 
     @Override
     public void onMarkerDrag(Marker marker) {
         mCircle.setCenter(marker.getPosition());
+
     }
 
     @Override
     public void onMarkerDragEnd(Marker marker) {
-
+        myRef.child("MarkerInfo").child("LastSelectedLoc").setValue(marker.getPosition());
+        checkDistance();
     }
 
     private void distanceMessage() {
         if (isOutside()) {
-
             Toast.makeText(getBaseContext(), "Outside, distance from center: " + distance[0] +
                     " Distance to the circle: " + (int) (distance[0] - mCircle.getRadius()) + " radius: " +
                     mCircle.getRadius(), Toast.LENGTH_LONG).show();
+            myRef.child("MarkerInfo").child("Inside/Outside").setValue("Outside");
         } else {
             Toast.makeText(getBaseContext(), "Inside, distance from center: " + distance[0] +
                     " radius: " + mCircle.getRadius(), Toast.LENGTH_LONG).show();
+            myRef.child("MarkerInfo").child("Inside/Outside").setValue("Inside");
         }
     }
 
@@ -161,15 +207,11 @@ public class LocationSelectActivity extends AppCompatActivity implements OnMapRe
         return (distance[0] > mCircle.getRadius());
     }
 
-    boolean killHandler = false;
-
     private void checkDistance() {
         handler = new Handler();
         runnable = new Runnable() {
             @Override
             public void run() {
-                if (killHandler)
-                    return;
                 distanceMessage();
                 handler.postDelayed(runnable, 5 * SECOND);
             }
@@ -187,8 +229,10 @@ public class LocationSelectActivity extends AppCompatActivity implements OnMapRe
     @Override
     public void onMapLongClick(LatLng latLng) {
         mMap.clear();
+        //setSeekBarVisibility();
+
         locationCircle = new CircleOptions().center(latLng)
-                .radius(seekBarSetRadius.getProgress());
+                .radius(radius);
         locationMarker = new MarkerOptions()
                 .draggable(true)
                 .position(latLng);
@@ -197,7 +241,38 @@ public class LocationSelectActivity extends AppCompatActivity implements OnMapRe
         if (handler != null) {
             handler.removeCallbacks(runnable);
         }
+        myRef.child("MarkerInfo").child("LastSelectedLoc").setValue(latLng);
         checkDistance();
+
+    }
+
+    private void sendNotification() {
+        if (!isOutside()) {
+            //send notification
+        }
+    }
+
+    private void loadLastCirclePos(LatLng latLng) {
+        mMap.clear();
+        //setSeekBarVisibility();
+        locationCircle = new CircleOptions().center(latLng)
+                .radius(radius);
+        locationMarker = new MarkerOptions()
+                .draggable(true)
+                .position(latLng);
+        mCircle = mMap.addCircle(locationCircle);
+        mMarker = mMap.addMarker(locationMarker);
+    }
+
+    private boolean isCircleCreated() {
+        return (mCircle != null);
+    }
+
+    private void setSeekBarVisibility() {
+        if (isCircleCreated())
+            seekBarSetRadius.setVisibility(View.VISIBLE);
+        else
+            seekBarSetRadius.setVisibility(View.GONE);
 
     }
 }
