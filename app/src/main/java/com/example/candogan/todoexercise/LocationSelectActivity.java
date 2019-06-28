@@ -1,16 +1,23 @@
 package com.example.candogan.todoexercise;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
+import androidx.core.app.NotificationCompat;
 
 import android.Manifest;
+import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.location.LocationManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.util.Log;
 import android.view.View;
 import android.widget.SeekBar;
 import android.widget.Toast;
@@ -38,19 +45,16 @@ public class LocationSelectActivity extends AppCompatActivity implements OnMapRe
     private GoogleMap mMap;
     private Circle mCircle;
     private Marker mMarker;
-    private CircleOptions locationCircle;
-    private MarkerOptions locationMarker;
-    private SeekBar seekBarSetRadius;
-    Handler handler;
-    Runnable runnable;
+
     FirebaseDatabase firebaseDatabase;
     DatabaseReference myRef;
 
     private final static int CIRCLE_RADIUS = 150;
     private final static int SEEKBAR_MAX = 750;
     private final static int SECOND = 1000;
-
-    int radius;
+    private final static String APP_PACKAGE = "com.example.candogan.todoexercise";
+    private final static String APP_CHANEL_ID = APP_PACKAGE + ".APP_CHANNEL";
+    private SeekBar seekBarSetRadius;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -62,7 +66,46 @@ public class LocationSelectActivity extends AppCompatActivity implements OnMapRe
         seekBarSetRadius = findViewById(R.id.seekBar_location_radius);
         initFireBase();
         getDataFromFireBase();
+        listenInsideOutside();
     }
+
+
+    public void listenInsideOutside() {
+        myRef.child("MarkerInfo").child("InsideOutside").addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                if (dataSnapshot.getValue() == "Inside"
+                &&android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                    pushNotification("Congratulations you arrived the area!!");
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+
+            }
+        });
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    private void pushNotification(String message){
+        String CHANNEL_ID = "TodoApp";
+        String CHANNEL_NAME = "ArriveInfo";
+        int NOTIFICATION_ID = 52;
+        NotificationChannel channel = new NotificationChannel(CHANNEL_ID,
+                CHANNEL_NAME, NotificationManager.IMPORTANCE_DEFAULT);
+        channel.enableVibration(true);
+        NotificationManager manager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        manager.createNotificationChannel(channel);
+        Notification notification = new Notification.Builder(this, CHANNEL_ID)
+                .setContentTitle("To Do App")
+                .setContentText(message)
+                .setSmallIcon(R.drawable.ic_add)
+                .setAutoCancel(true)
+                .build();
+        manager.notify(NOTIFICATION_ID, notification);
+    }
+    int radius;
 
     private void getDataFromFireBase() {
         myRef.addValueEventListener(new ValueEventListener() {
@@ -146,6 +189,7 @@ public class LocationSelectActivity extends AppCompatActivity implements OnMapRe
                 e.printStackTrace();
             }
             myLocation = new LatLng(latitude, longitude);
+
            /* locationCircle = new CircleOptions().center(myLocation)
                     .radius(CIRCLE_RADIUS);
             locationMarker = new MarkerOptions()
@@ -161,8 +205,19 @@ public class LocationSelectActivity extends AppCompatActivity implements OnMapRe
 //     LatLng sydney = new LatLng(-34, 151);
 //        mMap.addMarker(new MarkerOptions().position(sydney).title("Marker in Sydney"));
 //        mMap.moveCamera(CameraUpdateFactory.newLatLng(sydney));
+                mMap.setOnMyLocationChangeListener(new GoogleMap.OnMyLocationChangeListener() {
+                @Override
+                public void onMyLocationChange(Location location) {
+                   latitude=location.getLatitude();
+                   longitude=location.getLongitude();
+                }
+            });
         }
     }
+
+
+    Handler handler;
+    Runnable runnable;
 
     @Override
     public boolean onMarkerClick(Marker marker) {
@@ -192,11 +247,11 @@ public class LocationSelectActivity extends AppCompatActivity implements OnMapRe
             Toast.makeText(getBaseContext(), "Outside, distance from center: " + distance[0] +
                     " Distance to the circle: " + (int) (distance[0] - mCircle.getRadius()) + " radius: " +
                     mCircle.getRadius(), Toast.LENGTH_LONG).show();
-            myRef.child("MarkerInfo").child("Inside/Outside").setValue("Outside");
+            myRef.child("MarkerInfo").child("InsideOutside").setValue("Outside");
         } else {
             Toast.makeText(getBaseContext(), "Inside, distance from center: " + distance[0] +
                     " radius: " + mCircle.getRadius(), Toast.LENGTH_LONG).show();
-            myRef.child("MarkerInfo").child("Inside/Outside").setValue("Inside");
+            myRef.child("MarkerInfo").child("InsideOutside").setValue("Inside");
         }
     }
 
@@ -225,6 +280,8 @@ public class LocationSelectActivity extends AppCompatActivity implements OnMapRe
         handler.removeCallbacks(runnable);
     }
 
+    private CircleOptions locationCircle;
+    private MarkerOptions locationMarker;
 
     @Override
     public void onMapLongClick(LatLng latLng) {
@@ -244,12 +301,6 @@ public class LocationSelectActivity extends AppCompatActivity implements OnMapRe
         myRef.child("MarkerInfo").child("LastSelectedLoc").setValue(latLng);
         checkDistance();
 
-    }
-
-    private void sendNotification() {
-        if (!isOutside()) {
-            //send notification
-        }
     }
 
     private void loadLastCirclePos(LatLng latLng) {
