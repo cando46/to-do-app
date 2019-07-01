@@ -76,7 +76,7 @@ public class LocationSelectActivity extends AppCompatActivity implements OnMapRe
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                 if (dataSnapshot.getValue() == "Inside"
-                &&android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                        && android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
                     pushNotification("Congratulations you arrived the area!!");
 
                 }
@@ -89,8 +89,8 @@ public class LocationSelectActivity extends AppCompatActivity implements OnMapRe
         });
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.O)
-    private void pushNotification(String message){
+        @RequiresApi(api = Build.VERSION_CODES.O)
+    private void pushNotification(String message) {
         String CHANNEL_ID = "TodoApp";
         String CHANNEL_NAME = "ArriveInfo";
         int NOTIFICATION_ID = 52;
@@ -107,6 +107,7 @@ public class LocationSelectActivity extends AppCompatActivity implements OnMapRe
                 .build();
         manager.notify(NOTIFICATION_ID, notification);
     }
+
     int radius;
 
     private void getDataFromFireBase() {
@@ -207,11 +208,11 @@ public class LocationSelectActivity extends AppCompatActivity implements OnMapRe
 //     LatLng sydney = new LatLng(-34, 151);
 //        mMap.addMarker(new MarkerOptions().position(sydney).title("Marker in Sydney"));
 //        mMap.moveCamera(CameraUpdateFactory.newLatLng(sydney));
-                mMap.setOnMyLocationChangeListener(new GoogleMap.OnMyLocationChangeListener() {
+            mMap.setOnMyLocationChangeListener(new GoogleMap.OnMyLocationChangeListener() {
                 @Override
                 public void onMyLocationChange(Location location) {
-                   latitude=location.getLatitude();
-                   longitude=location.getLongitude();
+                    latitude = location.getLatitude();
+                    longitude = location.getLongitude();
                     myRef.child("MarkerInfo").child("MyLastKnownLocation").child("latitude").setValue(latitude);
                     myRef.child("MarkerInfo").child("MyLastKnownLocation").child("longitude").setValue(longitude);
                 }

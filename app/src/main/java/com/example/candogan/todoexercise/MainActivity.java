@@ -48,7 +48,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         addButton = findViewById(R.id.floatAB);
         recyclerView = findViewById(R.id.toDoRecyclerView);
         LinearLayoutManager layoutManager = new LinearLayoutManager(this);
-        layoutManager.setOrientation(LinearLayoutManager.VERTICAL);
+        layoutManager.setOrientation(RecyclerView.VERTICAL);
         adapter = new TodoAdapter();
         recyclerView.setAdapter(adapter);
         recyclerView.setLayoutManager(layoutManager);
@@ -58,6 +58,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         addButton.setOnClickListener(this);
     }
 
+    Intent serviceIntent;
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        serviceIntent = new Intent();
+        serviceIntent.putExtra("asd","asd");
+    }
 
     @Override
     public void onClick(View v) {
