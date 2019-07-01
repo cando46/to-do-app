@@ -56,6 +56,7 @@ public class LocationSelectActivity extends AppCompatActivity implements OnMapRe
     private final static String APP_PACKAGE = "com.example.candogan.todoexercise";
     private final static String APP_CHANEL_ID = APP_PACKAGE + ".APP_CHANNEL";
     private SeekBar seekBarSetRadius;
+    Intent servIntent;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -68,6 +69,7 @@ public class LocationSelectActivity extends AppCompatActivity implements OnMapRe
         initFireBase();
         getDataFromFireBase();
         listenInsideOutside();
+        servIntent = new Intent(getBaseContext(), ToDoAppService.class);
     }
 
 
@@ -89,7 +91,7 @@ public class LocationSelectActivity extends AppCompatActivity implements OnMapRe
         });
     }
 
-        @RequiresApi(api = Build.VERSION_CODES.O)
+    @RequiresApi(api = Build.VERSION_CODES.O)
     private void pushNotification(String message) {
         String CHANNEL_ID = "TodoApp";
         String CHANNEL_NAME = "ArriveInfo";
@@ -282,13 +284,13 @@ public class LocationSelectActivity extends AppCompatActivity implements OnMapRe
     @Override
     protected void onPause() {
         super.onPause();
-        Intent servIntent = new Intent("com.example.candogan.todoexercise.LONGRUNSERVICE");
         startService(servIntent);
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        stopService(servIntent);
     }
 
     @Override

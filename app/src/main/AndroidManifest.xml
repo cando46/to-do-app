@@ -18,17 +18,20 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme"
         tools:ignore="GoogleAppIndexingWarning">
-       <!-- <service
-            android:name=".ToDoAppService"
-            android:enabled="true"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="com.example.candogan.todoexercise.LONGRUNSERVICE" />
-            </intent-filter>
-        </service>-->
+        <!-- <service
+             android:name=".ToDoAppService"
+             android:enabled="true"
+             android:exported="true">
+             <intent-filter>
+                 <action android:name="com.example.candogan.todoexercise.LONGRUNSERVICE" />
+             </intent-filter>
+         </service>-->
         <service
             android:name=".NotificationService"
-            android:exported="false"/>
+            android:exported="false" />
+        <service
+            android:name=".ToDoAppService"
+            android:exported="false" />
 
         <meta-data
             android:name="com.google.android.geo.API_KEY"
