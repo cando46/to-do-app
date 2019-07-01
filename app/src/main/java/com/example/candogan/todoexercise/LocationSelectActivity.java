@@ -11,6 +11,7 @@ import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.location.LocationManager;
@@ -77,6 +78,7 @@ public class LocationSelectActivity extends AppCompatActivity implements OnMapRe
                 if (dataSnapshot.getValue() == "Inside"
                 &&android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
                     pushNotification("Congratulations you arrived the area!!");
+
                 }
             }
 
@@ -210,6 +212,8 @@ public class LocationSelectActivity extends AppCompatActivity implements OnMapRe
                 public void onMyLocationChange(Location location) {
                    latitude=location.getLatitude();
                    longitude=location.getLongitude();
+                    myRef.child("MarkerInfo").child("MyLastKnownLocation").child("latitude").setValue(latitude);
+                    myRef.child("MarkerInfo").child("MyLastKnownLocation").child("longitude").setValue(longitude);
                 }
             });
         }
@@ -272,6 +276,18 @@ public class LocationSelectActivity extends AppCompatActivity implements OnMapRe
             }
         };
         handler.post(runnable);
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        Intent servIntent = new Intent("com.example.candogan.todoexercise.LONGRUNSERVICE");
+        startService(servIntent);
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
     }
 
     @Override
